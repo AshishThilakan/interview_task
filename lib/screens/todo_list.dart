@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:todo_crud_api/screens/add_page.dart';
 import 'package:http/http.dart' as http;
@@ -25,55 +24,77 @@ class _TodoListPageState extends State<TodoListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('ToDo List'),
+      appBar: AppBar(
+        title: const Text('ToDo List'),
+        centerTitle: true,
+      ),
+      body: Visibility(
+        visible: isLoading,
+        replacement: RefreshIndicator(
+          onRefresh: fetchTodo,
+
+          child: ListView.builder(
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index] as Map;
+                final id = item['_id'] as String;
+                return ListTile(
+                  leading: CircleAvatar(
+                      child: Text('${index + 1}')),
+                  title: Text(item['title']),
+                  subtitle: Text(item['description']),
+                  trailing: PopupMenuButton(
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          //Open Edit Page
+                        } else if (value == 'delete') {
+                          //Delete and remove the item
+                          deleteById(id);
+                        }
+                      },
+                      itemBuilder: (context) {
+                        return [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Text('Edit'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text('Delete'),
+                          ),
+                        ];
+                      }),
+                );
+              }),
         ),
-    body: Visibility(
-      visible: isLoading,
-      child: Center(
-        child: CircularProgressIndicator(),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
       ),
-      replacement: RefreshIndicator(
-        onRefresh: fetchTodo,
-
-        child: ListView.builder(
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              final item = items[index] as Map;
-          return ListTile(
-            leading: CircleAvatar(
-                child: Text('${index + 1}')),
-            title: Text(item['title']),
-            subtitle: Text(item['description']),
-            trailing: PopupMenuButton(
-
-                itemBuilder: (context) {
-                  return [
-                    PopupMenuItem(
-                        child: Text('Edit'),
-                    value: 'edit',
-                    ),
-                    PopupMenuItem(
-                        child: Text('Delete'),
-                      value: 'delete',
-                    ),
-                  ];
-                }),
-          );
-        }),
-      ),
-    ),
-    floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: navigateToAddPage,
-        label: Text('Add Todo'),
-    ),
+        label: const Text('Add Todo'),
+      ),
     );
   }
 
   void navigateToAddPage() {
-
-    final route = MaterialPageRoute(builder: (context) => AddTodoPage());
+    final route = MaterialPageRoute(builder: (context) => const AddTodoPage());
     Navigator.push(context, route);
+  }
+
+  deleteById(String id) async {
+    //Delete the item
+    final url = 'https://api.nstack.in/v1/todos/$id';
+    final uri = Uri.parse(url);
+    final response = await http.delete(uri);
+    if (response.statusCode == 200) {
+      //Remove item from the list
+
+    } else {
+      //show error
+
+    }
   }
 
   Future<void> fetchTodo() async {
@@ -87,8 +108,8 @@ class _TodoListPageState extends State<TodoListPage> {
         items = result;
       });
     }
-  setState(() {
-    isLoading = false;
-  });
+    setState(() {
+      isLoading = false;
+    });
   }
 }
