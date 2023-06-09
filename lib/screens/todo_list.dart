@@ -45,6 +45,20 @@ class _TodoListPageState extends State<TodoListPage> {
                 child: Text('${index + 1}')),
             title: Text(item['title']),
             subtitle: Text(item['description']),
+            trailing: PopupMenuButton(
+
+                itemBuilder: (context) {
+                  return [
+                    PopupMenuItem(
+                        child: Text('Edit'),
+                    value: 'edit',
+                    ),
+                    PopupMenuItem(
+                        child: Text('Delete'),
+                      value: 'delete',
+                    ),
+                  ];
+                }),
           );
         }),
       ),
