@@ -14,7 +14,6 @@ class _TodoListPageState extends State<TodoListPage> {
   bool isLoading = true;
   List items = [];
 
-
   @override
   void initState() {
     super.initState();
@@ -32,38 +31,35 @@ class _TodoListPageState extends State<TodoListPage> {
         visible: isLoading,
         replacement: RefreshIndicator(
           onRefresh: fetchTodo,
-
           child: ListView.builder(
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final item = items[index] as Map;
                 final id = item['_id'] as String;
                 return ListTile(
-                  leading: CircleAvatar(
-                      child: Text('${index + 1}')),
+                  leading: CircleAvatar(child: Text('${index + 1}')),
                   title: Text(item['title']),
                   subtitle: Text(item['description']),
-                  trailing: PopupMenuButton(
-                      onSelected: (value) {
-                        if (value == 'edit') {
-                          //Open Edit Page
-                        } else if (value == 'delete') {
-                          //Delete and remove the item
-                          deleteById(id);
-                        }
-                      },
-                      itemBuilder: (context) {
-                        return [
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: Text('Edit'),
-                          ),
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: Text('Delete'),
-                          ),
-                        ];
-                      }),
+                  trailing: PopupMenuButton(onSelected: (value) {
+                    if (value == 'edit') {
+                      //Open Edit Page
+                      navigateToEditPage(item);
+                    } else if (value == 'delete') {
+                      //Delete and remove the item
+                      deleteById(id);
+                    }
+                  }, itemBuilder: (context) {
+                    return [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Text('Edit'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Text('Delete'),
+                      ),
+                    ];
+                  }),
                 );
               }),
         ),
@@ -78,9 +74,24 @@ class _TodoListPageState extends State<TodoListPage> {
     );
   }
 
-  void navigateToAddPage() {
+  Future<void> navigateToEditPage(Map item) async{
+    final route =
+        MaterialPageRoute(builder: (context) => AddTodoPage(todo: item));
+    await Navigator.push(context, route);
+    setState(() {
+      isLoading = true;
+    });
+    fetchTodo();
+  }
+
+
+  Future<void> navigateToAddPage() async {
     final route = MaterialPageRoute(builder: (context) => const AddTodoPage());
-    Navigator.push(context, route);
+    await Navigator.push(context, route);
+    setState(() {
+      isLoading = true;
+    });
+    fetchTodo();
   }
 
   deleteById(String id) async {
@@ -90,10 +101,13 @@ class _TodoListPageState extends State<TodoListPage> {
     final response = await http.delete(uri);
     if (response.statusCode == 200) {
       //Remove item from the list
-
+      final filtered = items.where((element) => element['_id'] != id).toList();
+      setState(() {
+        items = filtered;
+      });
     } else {
       //show error
-
+      showErrorMessage('Deleting Failed');
     }
   }
 
@@ -111,5 +125,16 @@ class _TodoListPageState extends State<TodoListPage> {
     setState(() {
       isLoading = false;
     });
+  }
+
+  void showErrorMessage(String message) {
+    final snackBar = SnackBar(
+      content: Text(
+        message,
+        style: TextStyle(color: Colors.red),
+      ),
+      backgroundColor: Colors.red,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }
